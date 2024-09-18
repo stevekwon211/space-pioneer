@@ -11,23 +11,50 @@ interface Position {
     z: number;
 }
 
-interface Rotation {
-    x: number;
-    y: number;
-    z: number;
-}
-
 export default function Home() {
     const [position, setPosition] = useState<Position>({ x: 0, y: 0, z: 0 });
-    const [rotation, setRotation] = useState<Rotation>({ x: 0, y: 0, z: 0 });
+    const [starphoreaPosition, setStarphoreaPosition] = useState<Position>({ x: 0, y: 0, z: 0 });
+    const [cameraDirection, setCameraDirection] = useState<Position>({ x: 0, y: 0, z: -1 });
 
     const handlePositionChange = useCallback((newPosition: Position) => {
         setPosition(newPosition);
     }, []);
 
-    const handleRotationChange = useCallback((newRotation: Rotation) => {
-        setRotation(newRotation);
+    const handleRotationChange = useCallback(() => {
+        // 이 함수는 ThreeScene에서 호출되지만, 여기서는 사용하지 않습니다.
+        // 필요하다면 나중에 구현할 수 있습니다.
     }, []);
+
+    const handleStarphoreaPositionChange = useCallback((newPosition: Position) => {
+        setStarphoreaPosition(newPosition);
+    }, []);
+
+    const handleCameraDirectionChange = useCallback((newDirection: Position) => {
+        setCameraDirection(newDirection);
+    }, []);
+
+    // Function to calculate relative position for radar
+    const calculateRadarPosition = (objectPosition: Position) => {
+        const relativeX = objectPosition.x - position.x;
+        const relativeZ = objectPosition.z - position.z;
+        const maxDistance = 500000; // Maximum radar range
+        const radarSize = 150; // Radar size in pixels
+
+        const x = (relativeX / maxDistance) * (radarSize / 2) + radarSize / 2;
+        const y = (relativeZ / maxDistance) * (radarSize / 2) + radarSize / 2;
+
+        return { x, y };
+    };
+
+    const radarPosition = calculateRadarPosition(starphoreaPosition);
+
+    // Calculate angle for direction display
+    const calculateDirectionAngle = () => {
+        const angle = Math.atan2(cameraDirection.x, cameraDirection.z);
+        return ((angle * (180 / Math.PI) + 180) % 360).toFixed(2);
+    };
+
+    const directionAngle = calculateDirectionAngle();
 
     return (
         <div
@@ -52,8 +79,13 @@ export default function Home() {
                     overflow: "hidden",
                 }}
             >
-                <ThreeScene onPositionChange={handlePositionChange} onRotationChange={handleRotationChange} />
-                {/* Minimap */}
+                <ThreeScene
+                    onPositionChange={handlePositionChange}
+                    onRotationChange={handleRotationChange}
+                    onStarphoreaPositionChange={handleStarphoreaPositionChange}
+                    onCameraDirectionChange={handleCameraDirectionChange}
+                />
+                {/* Verae Navigation */}
                 <div
                     style={{
                         position: "absolute",
@@ -73,51 +105,9 @@ export default function Home() {
                     <p>X: {position.x.toFixed(2)}</p>
                     <p>Y: {position.y.toFixed(2)}</p>
                     <p>Z: {position.z.toFixed(2)}</p>
-                    <div
-                        style={{
-                            width: "100px",
-                            height: "100px",
-                            border: "1px solid #0f0",
-                            margin: "10px auto",
-                            position: "relative",
-                        }}
-                    >
-                        {/* Ship indicator */}
-                        <div
-                            style={{
-                                position: "absolute",
-                                width: "10px",
-                                height: "10px",
-                                backgroundColor: "#0f0",
-                                borderRadius: "50%",
-                                left: "45px",
-                                top: "45px",
-                                transform: `rotate(${rotation.y}rad)`,
-                            }}
-                        >
-                            <div
-                                style={{
-                                    width: "0",
-                                    height: "0",
-                                    borderLeft: "5px solid transparent",
-                                    borderRight: "5px solid transparent",
-                                    borderBottom: "10px solid #0f0",
-                                    position: "absolute",
-                                    top: "-10px",
-                                    left: "0",
-                                }}
-                            />
-                        </div>
-                    </div>
                     {/* Ship status */}
                     <div style={{ marginTop: "10px" }}>
-                        <p>
-                            Speed:{" "}
-                            {Math.sqrt(
-                                Math.pow(position.x, 2) + Math.pow(position.y, 2) + Math.pow(position.z, 2)
-                            ).toFixed(2)}
-                        </p>
-                        <p>Direction: {((rotation.y * (180 / Math.PI) + 180) % 360).toFixed(2)}°</p>
+                        <p>Direction: {directionAngle}°</p>
                     </div>
                 </div>
                 {/* Spaceship interior overlay */}
@@ -136,6 +126,46 @@ export default function Home() {
 
             {/* Control Pad (unchanged) */}
             {/* ... */}
+
+            {/* 2D Radar Map */}
+            <div
+                style={{
+                    position: "absolute",
+                    bottom: "20px",
+                    left: "20px",
+                    width: "150px",
+                    height: "150px",
+                    backgroundColor: "rgba(0, 255, 0, 0.1)",
+                    border: "2px solid #0f0",
+                    borderRadius: "50%",
+                    zIndex: 10,
+                }}
+            >
+                {/* Player indicator (now just a dot) */}
+                <div
+                    style={{
+                        position: "absolute",
+                        width: "6px",
+                        height: "6px",
+                        backgroundColor: "#0f0",
+                        borderRadius: "50%",
+                        left: "72px",
+                        top: "72px",
+                    }}
+                />
+                {/* Starphorea indicator */}
+                <div
+                    style={{
+                        position: "absolute",
+                        width: "8px",
+                        height: "8px",
+                        backgroundColor: "#f00",
+                        borderRadius: "50%",
+                        left: `${radarPosition.x}px`,
+                        top: `${radarPosition.y}px`,
+                    }}
+                />
+            </div>
         </div>
     );
 }
