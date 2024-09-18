@@ -287,7 +287,10 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
             window.removeEventListener("resize", updateSize);
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("keyup", onKeyUp);
-            mountRef.current?.removeChild(renderer.domElement);
+            const mountElement = mountRef.current;
+            if (mountElement) {
+                mountElement.removeChild(renderer.domElement);
+            }
         };
     }, [onPositionChange, onRotationChange, onStarphoreaPositionChange, onCameraDirectionChange]);
 

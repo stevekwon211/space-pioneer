@@ -11,15 +11,8 @@ interface Position {
     z: number;
 }
 
-interface Rotation {
-    x: number;
-    y: number;
-    z: number;
-}
-
 export default function Home() {
     const [position, setPosition] = useState<Position>({ x: 0, y: 0, z: 0 });
-    const [rotation, setRotation] = useState<Rotation>({ x: 0, y: 0, z: 0 });
     const [starphoreaPosition, setStarphoreaPosition] = useState<Position>({ x: 0, y: 0, z: 0 });
     const [cameraDirection, setCameraDirection] = useState<Position>({ x: 0, y: 0, z: -1 });
 
@@ -27,8 +20,9 @@ export default function Home() {
         setPosition(newPosition);
     }, []);
 
-    const handleRotationChange = useCallback((newRotation: Rotation) => {
-        setRotation(newRotation);
+    const handleRotationChange = useCallback((newRotation: Position) => {
+        // 이 함수는 ThreeScene에서 호출되지만, 여기서는 사용하지 않습니다.
+        // 필요하다면 나중에 사용할 수 있습니다.
     }, []);
 
     const handleStarphoreaPositionChange = useCallback((newPosition: Position) => {
