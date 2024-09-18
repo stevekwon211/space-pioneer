@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
@@ -84,10 +84,8 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ onPositionChange, onRotationCha
             (gltf) => {
                 const starphoreaModel = gltf.scene;
 
-                // 기존 크기 조정
-                const originalBoundingBox = new THREE.Box3().setFromObject(starphoreaModel);
-                const originalSize = originalBoundingBox.getSize(new THREE.Vector3());
-                const originalScaleFactor = 1; // 기본 스케일
+                // Remove unused variables
+                new THREE.Box3().setFromObject(starphoreaModel);
 
                 // 크기 10배 증가
                 const scaleFactor = 10;
@@ -252,7 +250,9 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({ onPositionChange, onRotationCha
             window.removeEventListener("resize", updateSize);
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("keyup", onKeyUp);
-            mountRef.current?.removeChild(renderer.domElement);
+            if (mountRef.current) {
+                mountRef.current.removeChild(renderer.domElement);
+            }
         };
     }, [onPositionChange, onRotationChange]);
 
