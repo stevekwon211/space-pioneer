@@ -20,9 +20,9 @@ export default function Home() {
         setPosition(newPosition);
     }, []);
 
-    const handleRotationChange = useCallback((newRotation: Position) => {
+    const handleRotationChange = useCallback(() => {
         // 이 함수는 ThreeScene에서 호출되지만, 여기서는 사용하지 않습니다.
-        // 필요하다면 나중에 사용할 수 있습니다.
+        // 필요하다면 나중에 구현할 수 있습니다.
     }, []);
 
     const handleStarphoreaPositionChange = useCallback((newPosition: Position) => {
