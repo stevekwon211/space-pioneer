@@ -287,6 +287,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
             window.removeEventListener("resize", updateSize);
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("keyup", onKeyUp);
+
             const currentMount = mountRef.current;
             if (currentMount) {
                 currentMount.removeChild(renderer.domElement);
