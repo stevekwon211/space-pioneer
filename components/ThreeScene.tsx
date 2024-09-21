@@ -190,7 +190,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
                 const target = new THREE.Vector3(
                     targetPositionRef.current.x,
                     targetPositionRef.current.y,
-                    targetPositionRef.current.z
+                    targetPositionRef.current.z + 15000 // Add 15000 to the Z coordinate
                 );
                 const direction = new THREE.Vector3().subVectors(target, camera.position).normalize();
                 const distance = camera.position.distanceTo(target);
@@ -407,7 +407,11 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
 
             // 목표 회전 계산 (목표 위치를 바라보도록)
             const camera = cameraRef.current;
-            const target = new THREE.Vector3(targetPosition.x, targetPosition.y, targetPosition.z);
+            const target = new THREE.Vector3(
+                targetPosition.x,
+                targetPosition.y,
+                targetPosition.z + 15000 // Add 15000 to the Z coordinate
+            );
             camera.lookAt(target);
             cameraTargetQuaternionRef.current.copy(camera.quaternion);
 
