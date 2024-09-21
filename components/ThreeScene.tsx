@@ -60,6 +60,9 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
     useEffect(() => {
         if (!mountRef.current) return;
 
+        // Capture the current value of the ref
+        const currentMount = mountRef.current;
+
         // Scene setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000000);
@@ -81,7 +84,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
         updateSize();
         window.addEventListener("resize", updateSize);
 
-        mountRef.current.appendChild(renderer.domElement);
+        currentMount.appendChild(renderer.domElement);
 
         camera.position.set(0, 0, 1000000); // 초기 카메라 위치 조정
         camera.lookAt(0, 0, 0);
@@ -383,7 +386,6 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
             window.removeEventListener("keydown", onKeyDown);
             window.removeEventListener("keyup", onKeyUp);
 
-            const currentMount = mountRef.current;
             if (currentMount) {
                 currentMount.removeChild(renderer.domElement);
             }

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Position } from "../types"; // Adjust the import path as necessary
+import Map2D from "../components/Map2D";
 
 const ThreeScene = dynamic(() => import("../components/ThreeScene"), { ssr: false });
 
@@ -118,6 +119,11 @@ export default function Home() {
         }
     }, [starphoreaPosition]);
 
+    const directions = [
+        { position: starphoreaPosition, name: "Starphorea" },
+        // Add other directions here if needed
+    ];
+
     return (
         <div
             style={{
@@ -216,64 +222,14 @@ export default function Home() {
                     alignItems: "flex-end", // 추가
                 }}
             >
-                <div
-                    style={{
-                        width: "150px",
-                        height: "150px",
-                        backgroundColor: "rgba(0, 255, 0, 0.1)",
-                        border: "2px solid #0f0",
-                        borderRadius: "10px",
-                        overflow: "hidden",
-                        padding: "5px",
-                        position: "relative",
+                <Map2D
+                    playerPosition={position}
+                    directions={directions}
+                    onMapClick={(clickedPosition) => {
+                        setTargetPosition(clickedPosition);
+                        setIsMovingToTarget(true);
                     }}
-                >
-                    {/* Player indicator */}
-                    <div
-                        style={{
-                            position: "absolute",
-                            width: "6px",
-                            height: "6px",
-                            backgroundColor: "#0f0",
-                            left: "72px",
-                            top: "72px",
-                        }}
-                    />
-                    {radarPosition.isOutOfBounds && (
-                        // Direction indicator for out-of-bounds object
-                        <div
-                            onClick={handleIndicatorClick}
-                            style={{
-                                position: "absolute",
-                                width: "0",
-                                height: "0",
-                                borderLeft: "3px solid transparent",
-                                borderRight: "3px solid transparent",
-                                borderBottom: "6px solid #f00",
-                                transformOrigin: "bottom center",
-                                transform: `translate(-50%, -50%) rotate(${indicatorPosition.angle}deg)`,
-                                left: `${indicatorPosition.x}px`,
-                                top: `${indicatorPosition.y}px`,
-                                cursor: "pointer", // Add cursor style to indicate it's clickable
-                            }}
-                        />
-                    )}
-                    {!radarPosition.isOutOfBounds && (
-                        // Starphorea indicator
-                        <div
-                            onClick={handleIndicatorClick}
-                            style={{
-                                position: "absolute",
-                                width: "6px",
-                                height: "6px",
-                                backgroundColor: "#f00",
-                                left: `${radarPosition.x}px`,
-                                top: `${radarPosition.y}px`,
-                                cursor: "pointer", // Add cursor style to indicate it's clickable
-                            }}
-                        />
-                    )}
-                </div>
+                />
                 {/* 추가 위젯을 위한 공간 */}
                 <div></div>
                 <div></div>
