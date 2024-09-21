@@ -22,6 +22,8 @@ export default function Home() {
     const [starphoreaPosition, setStarphoreaPosition] = useState<Position>({ x: 0, y: 0, z: 0 });
     const [cameraDirection, setCameraDirection] = useState<Position>({ x: 0, y: 0, z: -1 });
     const [indicatorPosition, setIndicatorPosition] = useState<IndicatorPosition>({ x: 75, y: 75, angle: 0 });
+    const [targetPosition, setTargetPosition] = useState<Position | null>(null);
+    const [isMovingToTarget, setIsMovingToTarget] = useState(false);
 
     const handlePositionChange = useCallback((newPosition: Position) => {
         setPosition(newPosition);
@@ -107,6 +109,30 @@ export default function Home() {
 
     const directionAngle = calculateDirectionAngle();
 
+    const handleMapClick = (position: Position) => {
+        setTargetPosition(position);
+    };
+
+    const handleIndicatorClick = () => {
+        // Set the target position to Starphorea's position
+        const newTargetPosition = {
+            x: starphoreaPosition.x,
+            y: starphoreaPosition.y,
+            z: starphoreaPosition.z,
+        };
+
+        // Set the new target position and start moving
+        setTargetPosition(newTargetPosition);
+        setIsMovingToTarget(true);
+    };
+
+    // Add this new useEffect to handle the end of movement
+    useEffect(() => {
+        if (!targetPosition) {
+            setIsMovingToTarget(false);
+        }
+    }, [targetPosition]);
+
     return (
         <div
             style={{
@@ -127,6 +153,8 @@ export default function Home() {
                     onRotationChange={handleRotationChange}
                     onStarphoreaPositionChange={handleStarphoreaPositionChange}
                     onCameraDirectionChange={handleCameraDirectionChange}
+                    targetPosition={targetPosition}
+                    isMovingToTarget={isMovingToTarget}
                 />
             </div>
 
@@ -229,6 +257,7 @@ export default function Home() {
                     {radarPosition.isOutOfBounds && (
                         // Direction indicator for out-of-bounds object
                         <div
+                            onClick={handleIndicatorClick}
                             style={{
                                 position: "absolute",
                                 width: "0",
@@ -240,12 +269,14 @@ export default function Home() {
                                 transform: `translate(-50%, -50%) rotate(${indicatorPosition.angle}deg)`,
                                 left: `${indicatorPosition.x}px`,
                                 top: `${indicatorPosition.y}px`,
+                                cursor: "pointer", // Add cursor style to indicate it's clickable
                             }}
                         />
                     )}
                     {!radarPosition.isOutOfBounds && (
                         // Starphorea indicator
                         <div
+                            onClick={handleIndicatorClick}
                             style={{
                                 position: "absolute",
                                 width: "6px",
@@ -253,6 +284,7 @@ export default function Home() {
                                 backgroundColor: "#f00",
                                 left: `${radarPosition.x}px`,
                                 top: `${radarPosition.y}px`,
+                                cursor: "pointer", // Add cursor style to indicate it's clickable
                             }}
                         />
                     )}
