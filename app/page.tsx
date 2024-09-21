@@ -2,14 +2,9 @@
 
 import { useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
+import { Position } from "../types"; // Adjust the import path as necessary
 
 const ThreeScene = dynamic(() => import("../components/ThreeScene"), { ssr: false });
-
-interface Position {
-    x: number;
-    y: number;
-    z: number;
-}
 
 interface IndicatorPosition {
     x: number;

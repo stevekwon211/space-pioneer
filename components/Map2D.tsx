@@ -1,4 +1,5 @@
 import React from "react";
+import { Position } from "../types"; // Adjust the import path as necessary
 
 interface Map2DProps {
     // ... existing props ...
