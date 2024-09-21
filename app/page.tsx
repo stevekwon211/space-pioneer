@@ -109,29 +109,19 @@ export default function Home() {
 
     const directionAngle = calculateDirectionAngle();
 
-    const handleMapClick = (position: Position) => {
-        setTargetPosition(position);
-    };
-
-    const handleIndicatorClick = () => {
-        // Set the target position to Starphorea's position
-        const newTargetPosition = {
-            x: starphoreaPosition.x,
-            y: starphoreaPosition.y,
-            z: starphoreaPosition.z,
-        };
-
-        // Set the new target position and start moving
-        setTargetPosition(newTargetPosition);
-        setIsMovingToTarget(true);
-    };
-
     // Add this new useEffect to handle the end of movement
     useEffect(() => {
         if (!targetPosition) {
             setIsMovingToTarget(false);
         }
     }, [targetPosition]);
+
+    const handleIndicatorClick = useCallback(() => {
+        if (starphoreaPosition) {
+            setTargetPosition(starphoreaPosition);
+            setIsMovingToTarget(true);
+        }
+    }, [starphoreaPosition]);
 
     return (
         <div
