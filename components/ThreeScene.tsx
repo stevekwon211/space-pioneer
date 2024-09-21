@@ -35,7 +35,6 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
     targetPosition,
     isMovingToTarget,
 }) => {
-    const mountRef = useRef<HTMLDivElement>(null);
     const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
     const starphoreaRef = useRef<THREE.Object3D | null>(null);
     const keysRef = useRef<{ [key: string]: boolean }>({});
@@ -386,6 +385,16 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
         }
     }, [targetPosition, isMovingToTarget]);
 
+    const handlePlanetPositionChange = (planetName: string, position: THREE.Vector3) => {
+        if (planetName === "starphorea") {
+            onStarphoreaPositionChange({
+                x: position.x,
+                y: position.y,
+                z: position.z,
+            });
+        }
+    };
+
     return (
         <Canvas
             camera={{ position: [0, 0, 500000], fov: 75, near: 0.1, far: 10000000 }}
@@ -395,7 +404,11 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
             <directionalLight position={[1, 1, 1]} intensity={1} />
 
             {planetsData.map((planet, index) => (
-                <Planet key={index} {...planet} />
+                <Planet
+                    key={index}
+                    {...planet}
+                    onPositionChange={(position) => handlePlanetPositionChange(planet.name, position)}
+                />
             ))}
 
             <Controls />
