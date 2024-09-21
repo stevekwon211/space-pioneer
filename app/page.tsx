@@ -115,33 +115,37 @@ export default function Home() {
                 height: "100vh",
                 overflow: "hidden",
                 backgroundColor: "#000",
-                display: "flex",
-                flexDirection: "column",
                 fontFamily: "'Press Start 2P', cursive",
+                display: "flex", // 추가
+                flexDirection: "column", // 추가
             }}
         >
-            {/* Window to view exterior */}
-            <div
-                style={{
-                    flex: "1 1 70%",
-                    position: "relative",
-                    border: "10px solid #444",
-                    borderRadius: "10px 10px 0 0",
-                    overflow: "hidden",
-                }}
-            >
+            {/* ThreeScene - 전체 화면 */}
+            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}>
                 <ThreeScene
                     onPositionChange={handlePositionChange}
                     onRotationChange={handleRotationChange}
                     onStarphoreaPositionChange={handleStarphoreaPositionChange}
                     onCameraDirectionChange={handleCameraDirectionChange}
                 />
-                {/* Verae Navigation */}
+            </div>
+
+            {/* Top section - Verae Navigation */}
+            <div
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    padding: "20px",
+                    zIndex: 10,
+                    display: "flex", // 추가
+                    justifyContent: "space-between", // 추가
+                    alignItems: "flex-start", // 추가
+                }}
+            >
                 <div
                     style={{
-                        position: "absolute",
-                        top: "20px",
-                        left: "20px",
                         width: "200px",
                         backgroundColor: "rgba(0, 0, 0, 0.7)",
                         border: "2px solid #0f0",
@@ -149,91 +153,113 @@ export default function Home() {
                         padding: "10px",
                         color: "#0f0",
                         fontSize: "12px",
-                        zIndex: 10,
                     }}
                 >
                     <h3 style={{ marginBottom: "10px" }}>Verae Navigation</h3>
                     <p>X: {position.x.toFixed(2)}</p>
                     <p>Y: {position.y.toFixed(2)}</p>
                     <p>Z: {position.z.toFixed(2)}</p>
-                    {/* Ship status */}
                     <div style={{ marginTop: "10px" }}>
                         <p>Direction: {directionAngle}°</p>
                     </div>
                 </div>
-                {/* Spaceship interior overlay */}
-                <div
-                    style={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: "30%",
-                        background: "linear-gradient(to bottom, rgba(50,50,50,0) 0%, rgba(50,50,50,0.8) 100%)",
-                        zIndex: 2,
-                    }}
-                ></div>
+                {/* 추가 위젯을 위한 공간 */}
+                <div></div>
+                <div></div>
             </div>
 
-            {/* Control Pad (unchanged) */}
-            {/* ... */}
-
-            {/* 2D Radar Map */}
+            {/* Middle section - for future widgets */}
             <div
                 style={{
                     position: "absolute",
-                    bottom: "20px",
-                    left: "20px",
-                    width: "150px",
-                    height: "150px",
-                    backgroundColor: "rgba(0, 255, 0, 0.1)",
-                    border: "2px solid #0f0",
+                    top: "50%",
+                    left: 0,
+                    right: 0,
+                    transform: "translateY(-50%)",
+                    padding: "20px",
                     zIndex: 10,
-                    overflow: "hidden",
-                    padding: "5px", // Add padding to prevent indicator from being cut off
+                    display: "flex", // 추가
+                    justifyContent: "space-between", // 추가
+                    alignItems: "center", // 추가
                 }}
             >
-                {/* Player indicator */}
+                {/* 추가 위젯을 위한 공간 */}
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+
+            {/* Bottom section - 2D Radar Map */}
+            <div
+                style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    padding: "20px",
+                    zIndex: 10,
+                    display: "flex", // 추가
+                    justifyContent: "space-between", // 추가
+                    alignItems: "flex-end", // 추가
+                }}
+            >
                 <div
                     style={{
-                        position: "absolute",
-                        width: "6px",
-                        height: "6px",
-                        backgroundColor: "#0f0",
-                        left: "72px",
-                        top: "72px",
+                        width: "150px",
+                        height: "150px",
+                        backgroundColor: "rgba(0, 255, 0, 0.1)",
+                        border: "2px solid #0f0",
+                        borderRadius: "10px",
+                        overflow: "hidden",
+                        padding: "5px",
+                        position: "relative",
                     }}
-                />
-                {radarPosition.isOutOfBounds && (
-                    // Direction indicator for out-of-bounds object
-                    <div
-                        style={{
-                            position: "absolute",
-                            width: "0",
-                            height: "0",
-                            borderLeft: "4px solid transparent",
-                            borderRight: "4px solid transparent",
-                            borderTop: "8px solid #f00",
-                            transformOrigin: "top center",
-                            transform: `translate(-50%, -50%) rotate(${indicatorPosition.angle}deg)`,
-                            left: `${indicatorPosition.x}px`,
-                            top: `${indicatorPosition.y}px`,
-                        }}
-                    />
-                )}
-                {!radarPosition.isOutOfBounds && (
-                    // Starphorea indicator
+                >
+                    {/* Player indicator */}
                     <div
                         style={{
                             position: "absolute",
                             width: "6px",
                             height: "6px",
-                            backgroundColor: "#f00",
-                            left: `${radarPosition.x}px`,
-                            top: `${radarPosition.y}px`,
+                            backgroundColor: "#0f0",
+                            left: "72px",
+                            top: "72px",
                         }}
                     />
-                )}
+                    {radarPosition.isOutOfBounds && (
+                        // Direction indicator for out-of-bounds object
+                        <div
+                            style={{
+                                position: "absolute",
+                                width: "0",
+                                height: "0",
+                                borderLeft: "3px solid transparent",
+                                borderRight: "3px solid transparent",
+                                borderBottom: "6px solid #f00",
+                                transformOrigin: "bottom center",
+                                transform: `translate(-50%, -50%) rotate(${indicatorPosition.angle}deg)`,
+                                left: `${indicatorPosition.x}px`,
+                                top: `${indicatorPosition.y}px`,
+                            }}
+                        />
+                    )}
+                    {!radarPosition.isOutOfBounds && (
+                        // Starphorea indicator
+                        <div
+                            style={{
+                                position: "absolute",
+                                width: "6px",
+                                height: "6px",
+                                backgroundColor: "#f00",
+                                left: `${radarPosition.x}px`,
+                                top: `${radarPosition.y}px`,
+                            }}
+                        />
+                    )}
+                </div>
+                {/* 추가 위젯을 위한 공간 */}
+                <div></div>
+                <div></div>
             </div>
         </div>
     );
