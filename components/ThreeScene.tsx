@@ -2,7 +2,9 @@
 
 import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import Planet from "./Planet";
+import { planetsData } from "./planetsData";
 
 interface Position {
     x: number;
@@ -57,131 +59,10 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
     const cameraStartQuaternionRef = useRef(new THREE.Quaternion());
     const cameraTargetQuaternionRef = useRef(new THREE.Quaternion());
 
-    useEffect(() => {
-        if (!mountRef.current) return;
+    const planetRefs = useRef<Array<{ original: THREE.Mesh; holo: THREE.Mesh }>>([]);
 
-        // Capture the current value of the ref
-        const currentMount = mountRef.current;
-
-        // Scene setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000000);
-        cameraRef.current = camera;
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setClearColor(0x000000);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-        const updateSize = () => {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, height);
-        };
-
-        updateSize();
-        window.addEventListener("resize", updateSize);
-
-        currentMount.appendChild(renderer.domElement);
-
-        camera.position.set(0, 0, 1000000); // 초기 카메라 위치 조정
-        camera.lookAt(0, 0, 0);
-
-        // Ambient Light
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-        scene.add(ambientLight);
-
-        // Directional Light
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(1, 1, 1);
-        scene.add(directionalLight);
-
-        // Starphorea 로드 및 설정
-        const starphoreaLoader = new GLTFLoader();
-        starphoreaLoader.load(
-            "/Celestial_Enigma_0918053509.glb",
-            (gltf) => {
-                const starphoreaModel = gltf.scene;
-
-                const scaleFactor = 5000;
-                starphoreaModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
-                starphoreaModel.traverse((child) => {
-                    if (child instanceof THREE.Mesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                    }
-                });
-
-                starphoreaModel.position.set(350000, 0, 0);
-                scene.add(starphoreaModel);
-
-                starphoreaRef.current = starphoreaModel;
-
-                console.log("Starphorea model loaded");
-
-                onStarphoreaPositionChange({
-                    x: starphoreaModel.position.x,
-                    y: starphoreaModel.position.y,
-                    z: starphoreaModel.position.z,
-                });
-
-                // 모델 로드 후 애니메이션 시작
-                animate();
-            },
-            undefined,
-            (error) => {
-                console.error("An error occurred while loading the GLB model:", error);
-            }
-        );
-
-        // 운석 효과를 위한 별 생성
-        const createStars = () => {
-            const starCount = 1000;
-            const geometry = new THREE.BufferGeometry();
-            const positions = [];
-            const sizes = [];
-
-            for (let i = 0; i < starCount; i++) {
-                const distance = THREE.MathUtils.randFloat(400000, 600000);
-                const theta = THREE.MathUtils.randFloat(0, Math.PI * 2);
-                const phi = THREE.MathUtils.randFloat(0, Math.PI);
-
-                const x = distance * Math.sin(phi) * Math.cos(theta);
-                const y = distance * Math.sin(phi) * Math.sin(theta);
-                const z = distance * Math.cos(phi);
-
-                positions.push(x, y, z);
-                sizes.push(THREE.MathUtils.randFloat(1, 3));
-            }
-
-            geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-            geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
-
-            const material = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 1000,
-                sizeAttenuation: true,
-            });
-
-            const stars = new THREE.Points(geometry, material);
-            scene.add(stars);
-            starsRef.current = stars;
-        };
-
-        createStars();
-
-        // Keyboard controls
-        const onKeyDown = (event: KeyboardEvent) => {
-            keysRef.current[event.code] = true;
-        };
-        const onKeyUp = (event: KeyboardEvent) => {
-            keysRef.current[event.code] = false;
-        };
-        window.addEventListener("keydown", onKeyDown);
-        window.addEventListener("keyup", onKeyUp);
-
+    const Controls = () => {
+        const { camera } = useThree();
         const clock = new THREE.Clock();
 
         const moveTowardsTarget = () => {
@@ -221,11 +102,49 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
             }
         };
 
-        // Animation loop
-        const animate = () => {
-            requestAnimationFrame(animate);
+        useFrame(() => {
+            // Reset visibility of holographic meshes
+            planetRefs.current.forEach((meshPair) => {
+                meshPair.holo.visible = false;
+            });
 
-            const deltaTime = clock.getDelta();
+            // Set up frustum
+            const frustum = new THREE.Frustum();
+            const cameraViewProjectionMatrix = new THREE.Matrix4();
+
+            camera.updateMatrixWorld();
+            cameraViewProjectionMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+            frustum.setFromProjectionMatrix(cameraViewProjectionMatrix);
+
+            // Get planets in camera view
+            const planetsInView = planetRefs.current.filter(
+                (meshPair) => meshPair.original && frustum.intersectsObject(meshPair.original)
+            );
+
+            if (planetsInView.length > 0) {
+                let closestPlanet = planetsInView[0];
+                let minDistance = camera.position.distanceTo(
+                    closestPlanet.original.getWorldPosition(new THREE.Vector3())
+                );
+
+                planetsInView.forEach((meshPair) => {
+                    const distance = camera.position.distanceTo(
+                        meshPair.original.getWorldPosition(new THREE.Vector3())
+                    );
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestPlanet = meshPair;
+                    }
+                });
+
+                // Make the holographic mesh of the closest planet visible
+                closestPlanet.holo.visible = true;
+                (closestPlanet.holo.material as THREE.ShaderMaterial).uniforms.time.value = clock.getElapsedTime();
+
+                console.log("Applying holo effect to:", closestPlanet.original.name, "Distance:", minDistance);
+            } else {
+                console.log("No planets in view");
+            }
 
             // Starphorea 회전
             if (starphoreaRef.current) {
@@ -359,12 +278,12 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
 
                 // 카메라 회전 보간 처리
                 if (isCameraTransitioningRef.current) {
-                    cameraTransitionProgressRef.current += deltaTime / cameraTransitionDuration;
+                    cameraTransitionProgressRef.current += clock.getDelta() / cameraTransitionDuration;
                     if (cameraTransitionProgressRef.current >= 1) {
                         // 보간 완료
                         cameraTransitionProgressRef.current = 1;
                         isCameraTransitioningRef.current = false;
-                        // 카메라 회전을 정확히 목표 회전으로 설정
+                        // 카라 회전을 정확히 목표 회전으로 설정
                         camera.quaternion.copy(cameraTargetQuaternionRef.current);
                     } else {
                         // 카메라 회전을 보간
@@ -376,21 +295,68 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
                     }
                 }
             }
+        });
 
-            renderer.render(scene, cameraRef.current!);
-        };
+        return null;
+    };
 
-        // Clean up
-        return () => {
-            window.removeEventListener("resize", updateSize);
-            window.removeEventListener("keydown", onKeyDown);
-            window.removeEventListener("keyup", onKeyUp);
+    const Stars = () => {
+        const { scene } = useThree();
 
-            if (currentMount) {
-                currentMount.removeChild(renderer.domElement);
-            }
-        };
-    }, [onPositionChange, onRotationChange, onStarphoreaPositionChange, onCameraDirectionChange]);
+        useEffect(() => {
+            const createStars = () => {
+                const starCount = 1000;
+                const geometry = new THREE.BufferGeometry();
+                const positions = [];
+                const sizes = [];
+
+                for (let i = 0; i < starCount; i++) {
+                    const distance = THREE.MathUtils.randFloat(400000, 600000);
+                    const theta = THREE.MathUtils.randFloat(0, Math.PI * 2);
+                    const phi = THREE.MathUtils.randFloat(0, Math.PI);
+
+                    const x = distance * Math.sin(phi) * Math.cos(theta);
+                    const y = distance * Math.sin(phi) * Math.sin(theta);
+                    const z = distance * Math.cos(phi);
+
+                    positions.push(x, y, z);
+                    sizes.push(THREE.MathUtils.randFloat(1, 3));
+                }
+
+                geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+                geometry.setAttribute("size", new THREE.Float32BufferAttribute(sizes, 1));
+
+                const material = new THREE.PointsMaterial({
+                    color: 0xffffff,
+                    size: 1000,
+                    sizeAttenuation: true,
+                });
+
+                const stars = new THREE.Points(geometry, material);
+                scene.add(stars);
+                starsRef.current = stars;
+            };
+
+            createStars();
+
+            // Keyboard controls
+            const onKeyDown = (event: KeyboardEvent) => {
+                keysRef.current[event.code] = true;
+            };
+            const onKeyUp = (event: KeyboardEvent) => {
+                keysRef.current[event.code] = false;
+            };
+            window.addEventListener("keydown", onKeyDown);
+            window.addEventListener("keyup", onKeyUp);
+
+            return () => {
+                window.removeEventListener("keydown", onKeyDown);
+                window.removeEventListener("keyup", onKeyUp);
+            };
+        }, [scene]);
+
+        return null;
+    };
 
     // targetPosition과 isMovingToTarget이 변경될 때 레퍼런스 업데이트
     useEffect(() => {
@@ -402,7 +368,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
             isCameraTransitioningRef.current = true;
             cameraTransitionProgressRef.current = 0;
 
-            // 카메라의 현재 회전 저장
+            // 카메라의 현 회전 저장
             cameraStartQuaternionRef.current.copy(cameraRef.current.quaternion);
 
             // 목표 회전 계산 (목표 위치를 바라보도록)
@@ -410,7 +376,7 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
             const target = new THREE.Vector3(
                 targetPosition.x,
                 targetPosition.y,
-                targetPosition.z + 15000 // Add 15000 to the Z coordinate
+                targetPosition.z + 20000 // Add 15000 to the Z coordinate
             );
             camera.lookAt(target);
             cameraTargetQuaternionRef.current.copy(camera.quaternion);
@@ -420,7 +386,22 @@ const ThreeScene: React.FC<ThreeSceneProps> = ({
         }
     }, [targetPosition, isMovingToTarget]);
 
-    return <div ref={mountRef} style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }} />;
+    return (
+        <Canvas
+            camera={{ position: [0, 0, 500000], fov: 75, near: 0.1, far: 10000000 }}
+            style={{ width: "100%", height: "100%", position: "absolute", top: 0, left: 0 }}
+        >
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[1, 1, 1]} intensity={1} />
+
+            {planetsData.map((planet, index) => (
+                <Planet key={index} {...planet} />
+            ))}
+
+            <Controls />
+            <Stars />
+        </Canvas>
+    );
 };
 
 export default ThreeScene;
